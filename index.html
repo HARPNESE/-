@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>报价单生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        .left-panel {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .announcement-bar {
+            flex: 1;
+            margin: 0 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 8px 20px;
+            text-align: center;
+        }
+        
+        .announcement-content {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .left-panel h1 {
+            font-size: 24px;
+            margin: 0;
+            text-align: left;
+        }
+        
+        .template-selector {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .template-selector label {
+            margin-bottom: 0;
+        }
+        
+        .template-select {
+            width: auto;
+            min-width: 150px;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+        }
+        
+        .template-select option {
+            background-color: #764ba2;
+            color: white;
+        }
+        
+        .template-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .template-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .template-btn.nova {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .template-btn.haidong {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .right-panel {
+            flex: 1;
+            padding: 20px;
+            background-color: white;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin: 20px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .export-btn {
+            padding: 10px 20px;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .export-btn:hover {
+            background-color: #229954;
+        }
+        
+        .group {
+            margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            min-height: 100px;
+            position: relative;
+        }
+        
+        .group:empty {
+            min-height: 100px;
+        }
+        
+        .empty-group-hint {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            font-style: italic;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .group table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .group-header {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+            font-weight: bold;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .group-header-row {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            gap: 10px;
+        }
+        
+        .group-header .group-name-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #3498db;
+            border-radius: 4px;
+            background-color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .group-header .group-name-input:focus {
+            outline: none;
+            border-color: #2980b9;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .group-actions {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            justify-content: flex-start;
+        }
+        
+        .delete-group-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .delete-group-btn:hover {
+            background-color: #d32f2f;
+        }
+        
+        .product-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .product-table th:last-child, .product-table td:last-child {
+            min-width: 100px;
+            text-align: center;
+        }
+        
+        .product-table th:first-child, .product-table td:first-child {
+            min-width: 20px;
+            width: 20px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        
+        .product-table th:nth-child(2), .product-table td:nth-child(2) {
+            min-width: 60px;
+            width: 60px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        
+        .select-btn {
+            min-width: 150px;
+        }
+        
+        .input-field.price {
+            min-width: 100px;
+        }
+        
+        .input-field.quantity {
+            min-width: 80px;
+        }
+        
+        .input-field.unit {
+            min-width: 60px;
+        }
+        
+        .input-field.remark {
+            min-width: 120px;
+        }
+        
+        .input-field.name {
+            min-width: 150px;
+        }
+        
+        .input-field.brand {
+            min-width: 120px;
+        }
+        
+        .input-field.params {
+            min-width: 200px;
+        }
+        
+        .product-table th,
+        .product-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .product-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        
+        .product-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .product-select {
+            position: relative;
+        }
+        
+        .select-btn {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            cursor: pointer;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            height: 38px;
+            box-sizing: border-box;
+        }
+        
+        .select-btn:hover {
+            border-color: #3498db;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .add-btn {
+            padding: 8px 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .add-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-left: 5px;
+        }
+        
+        @media (min-width: 769px) {
+            .group-actions button {
+                width: 100px;
+                height: 32px;
+                font-size: 12px;
+                padding: 0 12px;
+            }
+        }
+        
+        .delete-btn:hover {
+            background-color: #d32f2f;
+        }
+        
+        .drag-handle {
+            cursor: grab;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 100%;
+            color: #999;
+            transition: color 0.3s ease;
+        }
+        
+        .drag-handle:hover {
+            color: #3498db;
+        }
+        
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        
+        .drag-handle::before {
+            content: "⋮⋮⋮";
+            font-size: 12px;
+            line-height: 1;
+        }
+        
+        .drag-highlight {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #3498db;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+        }
+        
+        .drag-highlight.visible {
+            opacity: 1;
+        }
+        
+        .product-table tbody tr {
+            position: relative;
+        }
+        
+        .group-add {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .group-name-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .add-group-btn {
+            padding: 10px 20px;
+            background-color: #f39c12;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .add-group-btn:hover {
+            background-color: #e67e22;
+        }
+        
+        .total-section {
+            margin-top: 30px;
+            text-align: right;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .total-label {
+            font-size: 18px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .total-amount {
+            font-size: 24px;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .left-panel {
+                width: 100%;
+                padding: 15px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .announcement-bar {
+                margin: 0;
+                width: 100%;
+                order: 3;
+            }
+            
+            .template-selector {
+                width: 100%;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .template-select {
+                width: 100%;
+            }
+            
+            .right-panel {
+                width: calc(100% - 10px);
+                padding: 10px;
+                margin: 5px;
+            }
+            
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .export-btn {
+                width: 100%;
+                margin-top: 0;
+                padding: 12px;
+                font-size: 16px;
+            }
+            
+            .product-card {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+            
+            .search-container {
+                margin-bottom: 15px;
+            }
+            
+            .search-input {
+                width: 100%;
+                padding: 10px;
+                font-size: 16px;
+            }
+            
+            .group-actions {
+                flex-direction: row;
+                align-items: center;
+                width: 100%;
+                gap: 10px;
+            }
+            
+            .group-actions button {
+                margin-right: 0;
+                margin-bottom: 0;
+                width: auto;
+                flex: 1;
+                padding: 8px;
+                font-size: 14px;
+            }
+            
+            .template-selector {
+                flex-direction: column;
+            }
+            
+            .template-selector select {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+            
+            .group {
+                overflow: hidden;
+            }
+            
+            .product-table {
+                min-width: 600px;
+            }
+            
+            .product-table th,
+            .product-table td {
+                padding: 8px;
+                font-size: 14px;
+            }
+            
+            .input-field {
+                width: 100%;
+                padding: 10px;
+                font-size: 16px;
+                height: 40px;
+                box-sizing: border-box;
+            }
+            
+            .select-btn {
+                width: 100%;
+                padding: 10px;
+                font-size: 14px;
+                height: 40px;
+                box-sizing: border-box;
+            }
+            
+            .add-btn, .delete-btn, .delete-group-btn {
+                padding: 4px 16px;
+                font-size: 14px;
+                height: 40px;
+                box-sizing: border-box;
+                white-space: nowrap;
+                min-width: 80px;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+            
+            .group-add {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .group-name-input {
+                width: 100%;
+                margin-bottom: 10px;
+                padding: 12px;
+                font-size: 16px;
+                height: 48px;
+            }
+            
+            .add-group-btn {
+                width: 100%;
+                padding: 12px;
+                font-size: 16px;
+                height: 48px;
+            }
+            
+            .total-section {
+                padding: 15px;
+            }
+            
+            .total-amount {
+                font-size: 20px;
+            }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .close-btn:hover {
+            color: #333;
+        }
+        
+        .search-container {
+            margin-bottom: 20px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .product-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        
+        .product-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            height: 200px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            word-wrap: break-word;
+        }
+        
+        .product-card:hover {
+            border-color: #3498db;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .product-card::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .product-card::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        
+        .product-card::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        
+        .product-card::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        .product-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .product-brand {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .product-model {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .product-params {
+            font-size: 12px;
+            color: #999;
+            line-height: 1.4;
+        }
+        
+        .category-btn {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            background-color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .category-btn:hover {
+            border-color: #3498db;
+            color: #3498db;
+        }
+        
+        .category-btn.active {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <!-- 页面主容器 -->
+    <div class="container">
+        <!-- 标题栏 -->
+        <div class="left-panel">
+            <h1>报价单生成器V3.6T</h1>
+            <div class="announcement-bar">
+                <div class="announcement-content">
+                    这里是公告栏。
+                </div>
+            </div>
+            <div class="template-selector">
+                <label for="templateSelect" style="margin-bottom: 10px; display: block; font-weight: bold;">选择模板：</label>
+                <select id="templateSelect" class="template-select">
+                    <option value="nova">模板1</option>
+                    <option value="haidong">模板2</option>
+                </select>
+            </div>
+        </div>
+        <!-- 产品清单 -->
+        <div class="right-panel">
+            <div class="header">
+                <h2>产品清单</h2>
+                <div style="display: flex; gap: 10px;">
+                    <button class="export-btn" id="exportBtn">导出为报价单</button>
+                    <button class="export-btn" id="exportListBtn" style="background-color: #3498db;">导出清单</button>
+                    <button class="export-btn" id="importListBtn" style="background-color: #9b59b6;">导入清单</button>
+                    <input type="file" id="importFileInput" accept=".json" style="display: none;">
+                </div>
+            </div>
+            
+            <div class="group" ondragover="dragOver(event)" ondrop="drop(event)">
+                <div class="group-header">
+                    <div class="group-header-row">
+                        <div class="drag-handle" draggable="true" ondragstart="dragGroupStart(event)" ondragend="dragEnd(event)"></div>
+                        <input type="text" class="group-name-input" value="未命名分组" onblur="saveGroupName(this)" onkeypress="saveGroupNameOnEnter(this, event)">
+                    </div>
+                    <div class="group-actions">
+                        <button class="add-btn" onclick="addProductRowToGroup(this)">新增设备</button>
+                        <button class="add-btn" onclick="copyGroup(this)" style="background-color: #9b59b6;">复制分组</button>
+                        <button class="delete-group-btn" onclick="deleteGroup(this)">删除分组</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="product-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 20px;"></th>
+                                <th>项数</th>
+                                <th>设备名称</th>
+                                <th>品牌</th>
+                                <th>型号</th>
+                                <th>单价</th>
+                                <th>数量</th>
+                                <th>单位</th>
+                                <th>备注</th>
+                                <th>技术参数</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productList">
+                            <tr ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                                <td><div class="drag-handle" draggable="true" ondragstart="dragProductStart(event)" ondragend="dragEnd(event)"></div></td>
+                                <td>1</td>
+                                <td><input type="text" class="input-field name" placeholder="设备名称"></td>
+                                <td><input type="text" class="input-field brand" placeholder="品牌"></td>
+                                <td>
+                                    <div class="product-select">
+                                        <button class="select-btn" onclick="openProductModal(this)">请选择型号</button>
+                                        <input type="hidden" class="product-id">
+                                    </div>
+                                </td>
+                                <td><input type="number" class="input-field price" value="0" min="0" step="0.01"></td>
+                                <td><input type="number" class="input-field quantity" value="1" min="1"></td>
+                                <td><input type="text" class="input-field unit" value="个" placeholder="单位"></td>
+                                <td><textarea class="input-field remark" placeholder="备注" onclick="openRemarkModal(this)" style="height: 38px; resize: none;"></textarea></td>
+                                <td>
+                    <div class="params-container">
+                        <textarea class="input-field params" placeholder="技术参数" onclick="openParamsModal(this)" style="height: 38px; resize: none;"></textarea>
+                    </div>
+                </td>
+                                <td><button class="delete-btn" onclick="deleteProductRow(this)">删除</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="group-add">
+                <input type="text" class="group-name-input" placeholder="请输入分组名称">
+                <button class="add-group-btn" onclick="addGroup()">新增分组</button>
+            </div>
+            
+            <div class="total-section">
+                <span class="total-label">合计：</span>
+                <span class="total-amount" id="totalAmount">0元</span>
+            </div>
+        </div>
+        
+        <!-- 测试版链接 -->
+        <div style="position: relative; font-size: 12px; line-height: 2; color: #666; padding: 0;">
+        <div style="position: absolute; right: 0; top: 0px; cursor: pointer;" 
+            onclick="window.open('https://bjbtest.harpnese.icu', '_blank')">
+            点击使用最新测试版
+        </div>
+        <div id="poem" style="text-align: center; color: #888; margin-top: 0;">
+            正在加载诗句...
+        </div>
+        </div>
+
+        <script>
+        fetch('https://v1.jinrishici.com/all.json')
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('poem').innerText = data.content + ' —— ' + data.author;
+        })
+        .catch(() => {
+            document.getElementById('poem').innerText = '腹有诗书气自华';
+        });
+        </script>
+
+    </div>
+    
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">选择设备</h3>
+                <button class="close-btn" onclick="closeProductModal()">&times;</button>
+            </div>
+            <div class="search-container">
+                <input type="text" class="search-input" id="productSearch" placeholder="搜索设备名称、品牌或型号">
+                <div style="margin: 10px 0;">
+                   <button class="add-btn" onclick="openCustomModelInput()" style="width: 100%; height: 50px;  padding: 8px;">使用此自定义型号<br>（自定义型号需手动输入技术参数等信息）</button>
+                </div>
+                <div style="margin-top: 10px; display: flex; align-items: center;">
+                    <span style="margin-right: 10px; font-size: 14px;">搜索范围：</span>
+                    <select id="searchScope" style="padding: 6px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                        <option value="all" selected>全部</option>
+                        <option value="name">设备名称/品牌/型号</option>
+                        <option value="params">技术参数</option>
+                    </select>
+                </div>
+            </div>
+            <div class="category-container" style="margin-bottom: 20px;">
+                <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; flex: 1; min-width: 200px;">
+                        <span style="font-weight: bold; margin-right: 10px; white-space: nowrap;">一级分类：</span>
+                        <select id="primaryCategory" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; flex: 1; min-width: 120px;">
+                            <option value="全部">全部</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; flex: 1; min-width: 200px;">
+                        <span style="font-weight: bold; margin-right: 10px; white-space: nowrap;">二级分类：</span>
+                        <select id="secondaryCategory" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; flex: 1; min-width: 120px;">
+                            <option value="全部">全部</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="product-list" id="productListModal"></div>
+        </div>
+    </div>
+    
+    <div class="modal" id="remarkModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">编辑备注</h3>
+                <button class="close-btn" onclick="closeRemarkModal()">&times;</button>
+            </div>
+            <div style="margin: 20px 0;">
+                <textarea id="remarkTextarea" style="width: 100%; height: 200px; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; resize: vertical;"></textarea>
+            </div>
+            <div style="text-align: right; display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="export-btn" onclick="saveRemark()" style="width: 80px; height: 36px; padding: 0;">保存</button>
+                <button class="delete-btn" onclick="closeRemarkModal()" style="width: 80px; height: 36px; padding: 0;">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="paramsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">编辑技术参数</h3>
+                <button class="close-btn" onclick="closeParamsModal()">&times;</button>
+            </div>
+            <div style="margin: 20px 0;">
+                <textarea id="paramsTextarea" style="width: 100%; height: 300px; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; resize: vertical;"></textarea>
+            </div>
+            <div style="text-align: right; display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="export-btn" onclick="saveParams()" style="width: 80px; height: 36px; padding: 0;">保存</button>
+                <button class="delete-btn" onclick="closeParamsModal()" style="width: 80px; height: 36px; padding: 0;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="exceljs.min.js"></script>
+    <script src="products.js"></script>
+    <script src="excelConfig.js"></script>
+    <script>
+        let currentTemplate = 'nova';
+        let selectedProductElement = null;
+        let currentCategory = 'all';
+        let currentRemarkInput = null;
+        let currentParamsInput = null;
+
+        // ====================== 拖拽功能（修复版 · 不影响原有任何功能）======================
+        let draggedElement = null;
+        let dragHighlight = null;
+        let lastDropPosition = null;
+
+        function createDragHighlight() {
+            if (!dragHighlight) {
+                dragHighlight = document.createElement('div');
+                dragHighlight.className = 'drag-highlight';
+                document.body.appendChild(dragHighlight);
+            }
+            return dragHighlight;
+        }
+
+        function showDragHighlight(container, element, position) {
+            lastDropPosition = { container, element, position };
+            const h = createDragHighlight();
+            const rect = element.getBoundingClientRect();
+            
+            // 获取容器的滚动偏移量，确保高亮线在水平滚动时也能正确显示
+            let scrollLeft = 0;
+            let current = container;
+            while (current) {
+                scrollLeft += current.scrollLeft || 0;
+                current = current.parentElement;
+            }
+            
+            // 获取页面的垂直滚动偏移量，确保高亮线在垂直滚动时也能正确显示
+            const pageScrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+            
+            h.style.left = (rect.left + scrollLeft) + 'px';
+            h.style.width = rect.width + 'px';
+            h.style.top = (position === 'before' ? rect.top + pageScrollTop : rect.bottom + pageScrollTop) + 'px';
+            h.classList.add('visible');
+        }
+
+        function hideDragHighlight() {
+            lastDropPosition = null;
+            if (dragHighlight) dragHighlight.classList.remove('visible');
+        }
+
+        function dragProductStart(e) {
+            // 确保只有拖拽句柄可以触发拖拽
+            if (!e.target.classList.contains('drag-handle')) return;
+            draggedElement = e.target.closest('tr');
+            if (!draggedElement) return;
+            e.dataTransfer.effectAllowed = 'move';
+            draggedElement.style.opacity = '0.5';
+        }
+
+        function dragGroupStart(e) {
+            draggedElement = e.target.closest('.group');
+            if (!draggedElement) return;
+            e.dataTransfer.effectAllowed = 'move';
+            draggedElement.style.opacity = '0.5';
+        }
+
+        function dragOver(e) {
+            e.preventDefault();
+            if (!draggedElement) return;
+
+            // 处理拖动产品行的情况
+            if (draggedElement.tagName === 'TR') {
+                // 检查目标是否在 tbody 内
+                const targetTbody = e.target.closest('tbody');
+                if (targetTbody) {
+                    // 检查目标是否是 tr 元素
+                    const targetRow = e.target.closest('tr');
+                    if (targetRow) {
+                        const mid = targetRow.getBoundingClientRect().top + targetRow.offsetHeight / 2;
+                        const pos = e.clientY < mid ? 'before' : 'after';
+                        showDragHighlight(targetTbody, targetRow, pos);
+                        return;
+                    } else {
+                        // 目标在 tbody 内但不是 tr 元素，显示在最后一行之后
+                        const rows = targetTbody.querySelectorAll('tr');
+                        if (rows.length > 0) {
+                            const lastRow = rows[rows.length - 1];
+                            showDragHighlight(targetTbody, lastRow, 'after');
+                        } else {
+                            showDragHighlight(targetTbody, targetTbody, 'append');
+                        }
+                        return;
+                    }
+                }
+            }
+
+            // 处理拖动分组的情况
+            if (draggedElement.classList.contains('group')) {
+                // 检查目标是否是分组或分组内的元素
+                const targetGroup = e.target.closest('.group');
+                if (targetGroup) {
+                    if (targetGroup !== draggedElement) {
+                        const mid = targetGroup.getBoundingClientRect().top + targetGroup.offsetHeight / 2;
+                        const pos = e.clientY < mid ? 'before' : 'after';
+                        showDragHighlight(targetGroup.parentElement, targetGroup, pos);
+                        return;
+                    }
+                } else {
+                    // 处理将分组拖动到右侧面板空白区域的情况
+                    const rightPanel = e.target.closest('.right-panel');
+                    if (rightPanel) {
+                        const groups = rightPanel.querySelectorAll('.group');
+                        const addArea = rightPanel.querySelector('.group-add');
+                        
+                        if (groups.length === 0) {
+                            // 右侧面板为空，显示在添加区域前
+                            showDragHighlight(rightPanel, addArea, 'before');
+                            return;
+                        } else {
+                            // 找到最后一个分组，显示在其后面
+                            const lastGroup = groups[groups.length - 1];
+                            showDragHighlight(rightPanel, lastGroup, 'after');
+                            return;
+                        }
+                    }
+                }
+            }
+
+            hideDragHighlight();
+        }
+
+        function drop(e) {
+            e.preventDefault();
+            if (!draggedElement || !lastDropPosition) {
+                hideDragHighlight();
+                resetDrag();
+                return;
+            }
+
+            const { container, element, position } = lastDropPosition;
+            const originParent = draggedElement.parentElement;
+
+            const isSameRow = (
+                element === draggedElement ||
+                (element === draggedElement.previousElementSibling && position === 'after') ||
+                (element === draggedElement.nextElementSibling && position === 'before')
+            );
+
+            const isSameGroup = (
+                draggedElement.classList.contains('group') && element === draggedElement
+            );
+
+            if (isSameRow || isSameGroup) {
+                hideDragHighlight();
+                resetDrag();
+                return;
+            }
+
+            draggedElement.remove();
+
+            if (draggedElement.tagName === 'TR') {
+                container.querySelector('.empty-group-hint')?.remove();
+                if (position === 'before') element.before(draggedElement);
+                else if (position === 'after') element.after(draggedElement);
+                else container.appendChild(draggedElement);
+            }
+
+            if (draggedElement.classList.contains('group')) {
+                if (position === 'before') element.before(draggedElement);
+                else element.after(draggedElement);
+            }
+
+            if (originParent?.tagName === 'TBODY' && !originParent.querySelector('tr')) {
+                const hint = document.createElement('div');
+                hint.className = 'empty-group-hint';
+                hint.textContent = '拖拽到此处';
+                originParent.appendChild(hint);
+            }
+
+            refreshItemNumbers();
+            hideDragHighlight();
+            resetDrag();
+        }
+
+        function dragEnd() {
+            resetDrag();
+        }
+
+        function resetDrag() {
+            if (draggedElement) draggedElement.style.opacity = '1';
+            draggedElement = null;
+        }
+
+        function refreshItemNumbers() {
+            document.querySelectorAll('.product-table tbody').forEach(tbody => {
+                tbody.querySelectorAll('tr').forEach((row, i) => {
+                    const num = row.querySelector('td:nth-child(2)');
+                    if (num) num.textContent = i + 1;
+                });
+            });
+            updateTotal();
+        }
+        // ====================== 拖拽结束 ======================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProductsToModal();
+            document.getElementById('templateSelect').addEventListener('change', function() {
+                currentTemplate = this.value;
+            });
+
+            document.addEventListener('input', function(e) {
+                if (e.target.classList.contains('price') || e.target.classList.contains('quantity')) {
+                    updateTotal();
+                }
+            });
+
+            document.getElementById('exportBtn').addEventListener('click', exportExcel);
+            document.getElementById('exportListBtn').addEventListener('click', exportList);
+            document.getElementById('importListBtn').addEventListener('click', importList);
+            document.getElementById('importFileInput').addEventListener('change', handleFileImport);
+
+            function debounce(func, wait) {
+                let timeout;
+                return function() {
+                    const context = this;
+                    const args = arguments;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(context, args), wait);
+                };
+            }
+
+            document.getElementById('productSearch').addEventListener('input', debounce(function() {
+                filterProducts(this.value);
+            }, 300));
+
+            document.getElementById('searchScope').addEventListener('change', function() {
+                filterProducts(document.getElementById('productSearch').value);
+            });
+        });
+
+        function openProductModal(element) {
+            selectedProductElement = element;
+            document.getElementById('productModal').style.display = 'block';
+            document.getElementById('productSearch').value = '';
+            loadProductsToModal();
+        }
+
+        function closeProductModal() {
+            document.getElementById('productModal').style.display = 'none';
+            selectedProductElement = null;
+        }
+
+        function loadProductsToModal() {
+            // 获取所有一级分类和二级分类
+            const primaryCategories = [...new Set(products.map(p => p.category))];
+            const secondaryCategories = [...new Set(products.map(p => p.name))];
+            
+            // 填充一级分类下拉框
+            const primarySelect = document.getElementById('primaryCategory');
+            primarySelect.innerHTML = '<option value="全部">全部</option>';
+            primaryCategories.forEach(cat => {
+                if (cat) {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    primarySelect.appendChild(option);
+                }
+            });
+            
+            // 填充二级分类下拉框
+            const secondarySelect = document.getElementById('secondaryCategory');
+            secondarySelect.innerHTML = '<option value="全部">全部</option>';
+            secondaryCategories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                secondarySelect.appendChild(option);
+            });
+            
+            // 添加事件监听器
+            primarySelect.addEventListener('change', function() {
+                // 当一级分类改变时，重置二级分类为全部
+                secondarySelect.value = '全部';
+                filterProducts(document.getElementById('productSearch').value);
+            });
+            
+            secondarySelect.addEventListener('change', function() {
+                filterProducts(document.getElementById('productSearch').value);
+            });
+            
+            // 初始过滤
+            filterProducts('', 'all');
+        }
+
+        function filterProducts(query) {
+            const list = document.getElementById('productListModal');
+            const scope = document.getElementById('searchScope').value;
+            const term = query.toLowerCase();
+            const primaryCategory = document.getElementById('primaryCategory').value;
+            const secondaryCategory = document.getElementById('secondaryCategory').value;
+
+            // 先获取所有匹配搜索条件的产品
+            const searchMatched = products.filter(p => {
+                if (!term) return true;
+                switch (scope) {
+                    case 'name': return p.name.toLowerCase().includes(term) || p.brand.toLowerCase().includes(term) || p.model.toLowerCase().includes(term);
+                    case 'params': return p.params.toLowerCase().includes(term);
+                    default: return p.name.toLowerCase().includes(term) || p.brand.toLowerCase().includes(term) || p.model.toLowerCase().includes(term) || p.params.toLowerCase().includes(term);
+                }
+            });
+
+            // 根据搜索结果更新一级分类下拉框
+            const primarySelect = document.getElementById('primaryCategory');
+            const currentPrimaryValue = primarySelect.value;
+            const availablePrimaryCategories = [...new Set(searchMatched.map(p => p.category))];
+            
+            primarySelect.innerHTML = '<option value="全部">全部</option>';
+            availablePrimaryCategories.forEach(cat => {
+                if (cat) {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    primarySelect.appendChild(option);
+                }
+            });
+            
+            // 恢复之前选中的一级分类（如果仍然可用）
+            if (availablePrimaryCategories.includes(currentPrimaryValue) || currentPrimaryValue === '全部') {
+                primarySelect.value = currentPrimaryValue;
+            } else {
+                primarySelect.value = '全部';
+            }
+
+            // 根据一级分类和搜索结果更新二级分类下拉框
+            const filteredByPrimary = searchMatched.filter(p => {
+                return primarySelect.value === '全部' || p.category === primarySelect.value;
+            });
+            
+            const secondarySelect = document.getElementById('secondaryCategory');
+            const currentSecondaryValue = secondarySelect.value;
+            const availableSecondaryCategories = [...new Set(filteredByPrimary.map(p => p.name))];
+            
+            secondarySelect.innerHTML = '<option value="全部">全部</option>';
+            availableSecondaryCategories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                secondarySelect.appendChild(option);
+            });
+            
+            // 恢复之前选中的二级分类（如果仍然可用）
+            if (availableSecondaryCategories.includes(currentSecondaryValue) || currentSecondaryValue === '全部') {
+                secondarySelect.value = currentSecondaryValue;
+            } else {
+                secondarySelect.value = '全部';
+            }
+
+            // 最终过滤产品
+            const matched = searchMatched.filter(p => {
+                // 一级分类过滤
+                const matchPrimary = primarySelect.value === '全部' || p.category === primarySelect.value;
+                
+                // 二级分类过滤
+                const matchSecondary = secondarySelect.value === '全部' || p.name === secondarySelect.value;
+                
+                return matchPrimary && matchSecondary;
+            });
+
+            list.innerHTML = '';
+            matched.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.onclick = () => selectProduct(p);
+                card.innerHTML = `
+                    <div class="product-name">${p.name}</div>
+                    <div class="product-brand">品牌：${p.brand}</div>
+                    <div class="product-model">型号：<strong>${p.model}</strong></div>
+                    <div class="product-params">${p.params.replace(/\n/g, '<br>')}</div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function selectProduct(p) {
+            if (!selectedProductElement) return;
+            selectedProductElement.textContent = p.model;
+            selectedProductElement.nextElementSibling.value = p.id;
+            const row = selectedProductElement.closest('tr');
+            row.querySelector('.name').value = p.name;
+            row.querySelector('.brand').value = p.brand;
+            row.querySelector('.params').value = p.params;
+            closeProductModal();
+        }
+
+        function addGroup() {
+            const inp = document.querySelector('.group-add .group-name-input');
+            if (!inp) {
+                console.error('找不到分组名称输入框');
+                return null;
+            }
+            const name = inp.value.trim();
+            if (!name) return null;
+            const panel = document.querySelector('.right-panel');
+            if (!panel) {
+                console.error('找不到右侧面板');
+                return null;
+            }
+            const addArea = document.querySelector('.group-add');
+            if (!addArea) {
+                console.error('找不到分组添加区域');
+                return null;
+            }
+            const g = document.createElement('div');
+            g.className = 'group';
+            g.setAttribute('ondragover', 'dragOver(event)');
+            g.setAttribute('ondrop', 'drop(event)');
+            g.innerHTML = `
+                <div class="group-header">
+                    <div class="group-header-row">
+                        <div class="drag-handle" draggable="true" ondragstart="dragGroupStart(event)" ondragend="dragEnd(event)"></div>
+                        <input type="text" class="group-name-input" value="${name}" onblur="saveGroupName(this)" onkeypress="saveGroupNameOnEnter(this, event)">
+                    </div>
+                    <div class="group-actions">
+                        <button class="add-btn" onclick="addProductRowToGroup(this)">新增设备</button>
+                        <button class="add-btn" onclick="copyGroup(this)" style="background-color: #9b59b6;">复制分组</button>
+                        <button class="delete-group-btn" onclick="deleteGroup(this)">删除分组</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="product-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 20px;"></th>
+                                <th>项数</th>
+                                <th>设备名称</th>
+                                <th>品牌</th>
+                                <th>型号</th>
+                                <th>单价</th>
+                                <th>数量</th>
+                                <th>单位</th>
+                                <th>备注</th>
+                                <th>技术参数</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                                <td><div class="drag-handle" draggable="true" ondragstart="dragProductStart(event)" ondragend="dragEnd(event)"></div></td>
+                                <td>1</td>
+                                <td><input type="text" class="input-field name" placeholder="设备名称"></td>
+                                <td><input type="text" class="input-field brand" placeholder="品牌"></td>
+                                <td>
+                                    <div class="product-select">
+                                        <button class="select-btn" onclick="openProductModal(this)">请选择型号</button>
+                                        <input type="hidden" class="product-id">
+                                    </div>
+                                </td>
+                                <td><input type="number" class="input-field price" value="0" min="0" step="0.01"></td>
+                                <td><input type="number" class="input-field quantity" value="1" min="1"></td>
+                                <td><input type="text" class="input-field unit" value="个" placeholder="单位"></td>
+                                <td><textarea class="input-field remark" placeholder="备注" onclick="openRemarkModal(this)" style="height: 38px; resize: none;"></textarea></td>
+                                <td>
+                    <div class="params-container">
+                        <textarea class="input-field params" placeholder="技术参数" onclick="openParamsModal(this)" style="height: 38px; resize: none;"></textarea>
+                    </div>
+                </td>
+                                <td><button class="delete-btn" onclick="deleteProductRow(this)">删除</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            panel.insertBefore(g, addArea);
+            inp.value = '';
+            return g;
+        }
+
+        function deleteGroup(btn) {
+            btn.closest('.group').remove();
+            updateTotal();
+        }
+
+        function copyGroup(btn) {
+            const originalGroup = btn.closest('.group');
+            if (!originalGroup) return;
+            
+            const groupName = originalGroup.querySelector('.group-name-input').value;
+            const panel = document.querySelector('.right-panel');
+            const addArea = document.querySelector('.group-add');
+            
+            // 创建新分组
+            const newGroup = document.createElement('div');
+            newGroup.className = 'group';
+            newGroup.setAttribute('ondragover', 'dragOver(event)');
+            newGroup.setAttribute('ondrop', 'drop(event)');
+            
+            // 复制分组内容
+            newGroup.innerHTML = originalGroup.innerHTML;
+            
+            // 更新分组名称为副本
+            const newGroupNameInput = newGroup.querySelector('.group-name-input');
+            newGroupNameInput.value = groupName + ' (副本)';
+            
+            // 插入新分组到原分组之后
+            originalGroup.after(newGroup);
+            
+            // 刷新项数和总计
+            refreshItemNumbers();
+            updateTotal();
+        }
+
+        function deleteProductRow(btn) {
+            const row = btn.closest('tr');
+            const tbody = row.closest('tbody');
+            row.remove();
+            const rows = tbody.querySelectorAll('tr');
+            if (rows.length === 0) {
+                const h = document.createElement('div');
+                h.className = 'empty-group-hint';
+                h.textContent = '拖拽到此处';
+                tbody.appendChild(h);
+            } else {
+                rows.forEach((r, i) => r.querySelector('td:nth-child(2)').textContent = i + 1);
+            }
+            updateTotal();
+        }
+
+        function addProductRowToGroup(btn) {
+            const g = btn.closest('.group');
+            const tbody = g.querySelector('tbody');
+            tbody.querySelector('.empty-group-hint')?.remove();
+            const last = tbody.querySelector('tr:last-child');
+            const r = document.createElement('tr');
+            r.setAttribute('ondragover', 'dragOver(event)');
+            r.setAttribute('ondrop', 'drop(event)');
+            r.setAttribute('ondragend', 'dragEnd(event)');
+            r.innerHTML = `
+                <td><div class="drag-handle" draggable="true" ondragstart="dragProductStart(event)" ondragend="dragEnd(event)"></div></td>
+                <td>${tbody.querySelectorAll('tr').length + 1}</td>
+                <td><input type="text" class="input-field name" placeholder="设备名称"></td>
+                <td><input type="text" class="input-field brand" placeholder="品牌"></td>
+                <td>
+                    <div class="product-select">
+                        <button class="select-btn" onclick="openProductModal(this)">请选择型号</button>
+                        <input type="hidden" class="product-id">
+                    </div>
+                </td>
+                <td><input type="number" class="input-field price" value="0" min="0" step="0.01"></td>
+                <td><input type="number" class="input-field quantity" value="1" min="1"></td>
+                <td><input type="text" class="input-field unit" value="个" placeholder="单位"></td>
+                <td><textarea class="input-field remark" placeholder="备注" onclick="openRemarkModal(this)" style="height: 38px; resize: none;"></textarea></td>
+                <td>
+                    <div class="params-container">
+                        <textarea class="input-field params" placeholder="技术参数" onclick="openParamsModal(this)" style="height: 38px; resize: none;"></textarea>
+                    </div>
+                </td>
+                <td><button class="delete-btn" onclick="deleteProductRow(this)">删除</button></td>
+            `;
+            tbody.appendChild(r);
+            updateTotal();
+        }
+
+        function updateTotal() {
+            let total = 0;
+            document.querySelectorAll('.product-table tbody tr').forEach(row => {
+                const p = parseFloat(row.querySelector('.price')?.value) || 0;
+                const q = parseInt(row.querySelector('.quantity')?.value) || 0;
+                total += p * q;
+            });
+            document.getElementById('totalAmount').textContent = total.toFixed(2) + '元';
+        }
+
+        async function exportExcel() {
+            try {
+                // 创建工作簿
+                const workbook = new ExcelJS.Workbook();
+                
+                // 创建工作表
+                const worksheet = workbook.addWorksheet('报价单');
+                
+                // 根据当前模板设置工作表
+                if (currentTemplate === 'nova') {
+                    await setupNovaTemplate(worksheet, workbook);
+                } else {
+                    await setupHaidongTemplate(worksheet, workbook);
+                }
+                
+                // 填充数据
+                fillWorksheetData(worksheet, currentTemplate);
+                
+                // 生成Excel文件并下载
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `报价单_${new Date().toISOString().slice(0,10)}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('导出Excel失败:', error);
+                alert('导出Excel失败: ' + error.message);
+            }
+        }
+        function exportList() {
+            try {
+                const groups = [];
+                document.querySelectorAll('.group').forEach(group => {
+                    const groupName = group.querySelector('.group-header input').value;
+                    const products = [];
+                    group.querySelectorAll('tbody tr').forEach(row => {
+                        const product = {
+                            name: row.querySelector('.name').value || '',
+                            brand: row.querySelector('.brand').value || '',
+                            model: row.querySelector('.select-btn').textContent || '',
+                            price: parseFloat(row.querySelector('.price').value) || 0,
+                            quantity: parseInt(row.querySelector('.quantity').value) || 0,
+                            unit: row.querySelector('.unit').value || '个',
+                            remark: row.querySelector('.remark').value || '',
+                            params: row.querySelector('.params').value || ''
+                        };
+                        if (product.model || product.name) {
+                            products.push(product);
+                        }
+                    });
+                    if (products.length > 0) {
+                        groups.push({ name: groupName, products: products });
+                    }
+                });
+                
+                const data = { groups: groups, template: currentTemplate, exportDate: new Date().toISOString() };
+                const jsonStr = JSON.stringify(data, null, 2);
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `产品清单_${new Date().toISOString().slice(0,10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('导出清单失败:', error);
+                alert('导出清单失败: ' + error.message);
+            }
+        }
+        function importList() { document.getElementById('importFileInput').click(); }
+        function handleFileImport(e) {
+            try {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        if (!data.groups || !Array.isArray(data.groups)) {
+                            throw new Error('无效的JSON格式：缺少groups数组');
+                        }
+                        
+                        // 保存对输入框和添加区域的引用
+                        const inp = document.querySelector('.group-add .group-name-input');
+                        if (!inp) {
+                            throw new Error('找不到分组名称输入框');
+                        }
+                        
+                        // 清空现有分组
+                        document.querySelectorAll('.group').forEach(group => {
+                            group.remove();
+                        });
+                        
+                        // 设置模板
+                        if (data.template) {
+                            currentTemplate = data.template;
+                            document.getElementById('templateSelect').value = data.template;
+                        }
+                        
+                        // 添加新分组和产品
+                        data.groups.forEach(groupData => {
+                            inp.value = groupData.name;
+                            const group = addGroup();
+                            
+                            if (!group) {
+                                throw new Error('创建分组失败');
+                            }
+                            const tbody = group.querySelector('tbody');
+                            if (!tbody) {
+                                throw new Error('找不到分组的tbody元素');
+                            }
+                            
+                            // 清空默认添加的行
+                            tbody.innerHTML = '';
+                            
+                            // 添加导入的产品
+                            groupData.products.forEach(product => {
+                                const r = document.createElement('tr');
+                                r.setAttribute('ondragover', 'dragOver(event)');
+                                r.setAttribute('ondrop', 'drop(event)');
+                                r.setAttribute('ondragend', 'dragEnd(event)');
+                                r.innerHTML = `
+                                    <td><div class="drag-handle" draggable="true" ondragstart="dragProductStart(event)" ondragend="dragEnd(event)"></div></td>
+                                    <td>${tbody.querySelectorAll('tr').length + 1}</td>
+                                    <td><input type="text" class="input-field name" value="${product.name || ''}" placeholder="设备名称"></td>
+                                    <td><input type="text" class="input-field brand" value="${product.brand || ''}" placeholder="品牌"></td>
+                                    <td>
+                                        <div class="product-select">
+                                            <button class="select-btn" onclick="openProductModal(this)">${product.model || '请选择型号'}</button>
+                                            <input type="hidden" class="product-id">
+                                        </div>
+                                    </td>
+                                    <td><input type="number" class="input-field price" value="${product.price || 0}" min="0" step="0.01"></td>
+                                    <td><input type="number" class="input-field quantity" value="${product.quantity || 1}" min="1"></td>
+                                    <td><input type="text" class="input-field unit" value="${product.unit || '个'}" placeholder="单位"></td>
+                                    <td><textarea class="input-field remark" placeholder="备注" onclick="openRemarkModal(this)" style="height: 38px; resize: none;">${product.remark || ''}</textarea></td>
+                                    <td>
+                                        <div class="params-container">
+                                            <textarea class="input-field params" placeholder="技术参数" onclick="openParamsModal(this)" style="height: 38px; resize: none;">${product.params || ''}</textarea>
+                                        </div>
+                                    </td>
+                                    <td><button class="delete-btn" onclick="deleteProductRow(this)">删除</button></td>
+                                `;
+                                tbody.appendChild(r);
+                            });
+                        });
+                        
+                        // 刷新项数和总计
+                        refreshItemNumbers();
+                        updateTotal();
+                        
+                        alert('导入成功！');
+                    } catch (error) {
+                        console.error('解析JSON失败:', error);
+                        alert('导入失败: ' + error.message);
+                    }
+                };
+                reader.onerror = function() {
+                    alert('读取文件失败');
+                };
+                reader.readAsText(file);
+            } catch (error) {
+                console.error('导入失败:', error);
+                alert('导入失败: ' + error.message);
+            }
+        }
+
+        function saveGroupName(inp) { if (!inp.value.trim()) inp.value = '未命名分组'; }
+        function saveGroupNameOnEnter(inp, e) { if (e.key === 'Enter') { saveGroupName(this); inp.blur(); } }
+
+        function openRemarkModal(inp) {
+            currentRemarkInput = inp;
+            document.getElementById('remarkTextarea').value = inp.value;
+            document.getElementById('remarkModal').style.display = 'block';
+        }
+        function closeRemarkModal() { document.getElementById('remarkModal').style.display = 'none'; }
+        function saveRemark() {
+            if (currentRemarkInput) currentRemarkInput.value = document.getElementById('remarkTextarea').value;
+            closeRemarkModal();
+        }
+
+        function openParamsModal(inp) {
+            currentParamsInput = inp;
+            document.getElementById('paramsTextarea').value = inp.value;
+            document.getElementById('paramsModal').style.display = 'block';
+        }
+        function closeParamsModal() { document.getElementById('paramsModal').style.display = 'none'; }
+        function saveParams() {
+            if (currentParamsInput) currentParamsInput.value = document.getElementById('paramsTextarea').value;
+            closeParamsModal();
+        }
+
+        function openCustomModelInput() {
+            if (!selectedProductElement) return;
+            const s = document.getElementById('productSearch').value.trim();
+            const m = s || prompt('输入自定义型号：');
+            if (!m) return;
+            selectedProductElement.textContent = m;
+            selectedProductElement.nextElementSibling.value = 'custom';
+            const r = selectedProductElement.closest('tr');
+            r.querySelector('.name').value = '';
+            r.querySelector('.brand').value = '';
+            r.querySelector('.params').value = '';
+            closeProductModal();
+        }
+    </script>
+
+
+
+</body>
+</html>
